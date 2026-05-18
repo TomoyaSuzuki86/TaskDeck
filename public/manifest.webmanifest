@@ -1,0 +1,17 @@
+{
+  "name": "Task Deck",
+  "short_name": "Task Deck",
+  "description": "今日やるべきことを上から3つだけ見せるタスクデッキ",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#6d6cf6",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
