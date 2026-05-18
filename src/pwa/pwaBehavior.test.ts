@@ -39,7 +39,8 @@ describe('PWA behavior', () => {
 
   test('スマホ幅でもメインデッキを操作しやすく保つ', () => {
     const css = readFileSync(join(root, 'src/styles.css'), 'utf-8');
-    expect(css).toContain('width: min(460px, 100%)');
+    expect(css).toContain('width: min(430px, 100%)');
+    expect(css).toContain('bottom: 22px');
   });
 
   test('Firebase Hostingへデプロイしやすい構成にする', () => {

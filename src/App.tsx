@@ -12,7 +12,7 @@ import { todayKey } from './domain/taskDeck/dateUtils';
 import { getArchivedTasks, getDeckSections } from './domain/taskDeck/taskOrdering';
 import type { Task } from './domain/taskDeck/types';
 
-type ModalMode = 'manual' | 'voice' | null;
+type ModalMode = 'manual' | 'voice' | 'settings' | 'archive' | null;
 
 export function App() {
   const { user, loginWithGoogle, logout } = useAuth();
@@ -52,17 +52,68 @@ export function App() {
     <>
       <TaskDeckHome
         sections={sections}
-        archivedTasks={archivedTasks}
-        userEmail={user.email}
         onComplete={(task) => updateTask(completeTask(task))}
         onPostpone={(task) => updateTask(postponeTask(task, sessionRef.current))}
         onArchive={(task) => updateTask(archiveTask(task))}
-        onRestore={(task) => updateTask(restoreTask(task))}
-        onLogout={logout}
+        onOpenSettings={() => setModal('settings')}
       />
       <AddTaskButton onManualAdd={() => setModal('manual')} onVoiceAdd={() => setModal('voice')} />
       {modal === 'manual' && <ManualTaskModal today={todayKey()} onSave={addManualTask} onClose={() => setModal(null)} />}
       {modal === 'voice' && <VoiceTaskInput onCreate={addVoiceTask} onClose={() => setModal(null)} />}
+      {modal === 'settings' && (
+        <div className="modal-backdrop" role="presentation">
+          <section className="settings-sheet" role="dialog" aria-modal="true" aria-label="設定">
+            <header>
+              <h2>設定</h2>
+              <button type="button" onClick={() => setModal(null)}>
+                閉じる
+              </button>
+            </header>
+            <div className="settings-list">
+              <div>
+                <span>アカウント</span>
+                <strong>{user.email}</strong>
+              </div>
+              <div>
+                <span>同期</span>
+                <strong>待機中</strong>
+              </div>
+            </div>
+            <button className="sheet-action" type="button" onClick={() => setModal('archive')}>
+              保管リスト
+            </button>
+            <button className="sheet-danger" type="button" onClick={logout}>
+              ログアウト
+            </button>
+          </section>
+        </div>
+      )}
+      {modal === 'archive' && (
+        <div className="modal-backdrop" role="presentation">
+          <section className="settings-sheet" role="dialog" aria-modal="true" aria-label="保管リスト">
+            <header>
+              <h2>保管リスト</h2>
+              <button type="button" onClick={() => setModal('settings')}>
+                戻る
+              </button>
+            </header>
+            {archivedTasks.length === 0 ? (
+              <p className="empty-text">保管中のタスクはありません</p>
+            ) : (
+              <div className="archive-list">
+                {archivedTasks.map((task) => (
+                  <div className="archive-row" key={task.id}>
+                    <span>{task.title}</span>
+                    <button type="button" onClick={() => updateTask(restoreTask(task))}>
+                      戻す
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+        </div>
+      )}
     </>
   );
 }

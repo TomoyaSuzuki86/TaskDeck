@@ -28,6 +28,7 @@ describe('Authentication flow', () => {
   test('ログアウト後はログイン画面に戻る', async () => {
     renderApp();
     await userEvent.click(screen.getByRole('button', { name: 'Googleでログイン' }));
+    await userEvent.click(screen.getByRole('button', { name: '設定' }));
     await userEvent.click(screen.getByRole('button', { name: /ログアウト/ }));
     expect(screen.getByRole('button', { name: 'Googleでログイン' })).toBeInTheDocument();
   });
@@ -35,6 +36,7 @@ describe('Authentication flow', () => {
   test('ログイン中ユーザーのuidを使って保存データを分離する', async () => {
     renderApp();
     await userEvent.click(screen.getByRole('button', { name: 'Googleでログイン' }));
+    await userEvent.click(screen.getByRole('button', { name: '設定' }));
     expect(screen.getByText('user@example.com')).toBeInTheDocument();
   });
 

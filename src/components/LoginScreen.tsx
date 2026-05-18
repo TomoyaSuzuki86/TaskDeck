@@ -12,7 +12,6 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
           <CheckCircle2 size={30} aria-hidden="true" />
         </div>
         <h1>Task Deck</h1>
-        <p>今日やることを3つだけ。迷わず、上から片づけるためのタスクデッキ。</p>
         <button className="google-login" type="button" onClick={onLogin}>
           Googleでログイン
         </button>
