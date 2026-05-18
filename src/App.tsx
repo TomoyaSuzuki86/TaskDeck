@@ -12,7 +12,7 @@ import { todayKey } from './domain/taskDeck/dateUtils';
 import { getArchivedTasks, getDeckSections } from './domain/taskDeck/taskOrdering';
 import type { Task } from './domain/taskDeck/types';
 
-type ModalMode = 'manual' | 'voice' | 'settings' | 'archive' | null;
+type ModalMode = 'manual' | 'voice' | 'settings' | 'archive' | 'completed' | null;
 
 export function App() {
   const { user, loginWithGoogle, logout } = useAuth();
@@ -22,6 +22,7 @@ export function App() {
 
   const sections = useMemo(() => getDeckSections(tasks, new Date(), sessionRef.current), [tasks]);
   const archivedTasks = useMemo(() => getArchivedTasks(tasks), [tasks]);
+  const completedTasks = useMemo(() => tasks.filter((task) => task.status === 'completed'), [tasks]);
 
   const updateTask = (nextTask: Task) => {
     setTasks((current) => current.map((task) => (task.id === nextTask.id ? nextTask : task)));
@@ -42,6 +43,7 @@ export function App() {
 
   const addVoiceTask = (title: string) => {
     setTasks((current) => [...current, createVoiceTask({ title, order: current.length + 1 })]);
+    setModal(null);
   };
 
   if (!user) {
@@ -56,9 +58,21 @@ export function App() {
         onPostpone={(task) => updateTask(postponeTask(task, sessionRef.current))}
         onArchive={(task) => updateTask(archiveTask(task))}
         onOpenSettings={() => setModal('settings')}
+        onOpenArchive={() => setModal('archive')}
       />
-      <AddTaskButton onManualAdd={() => setModal('manual')} onVoiceAdd={() => setModal('voice')} />
-      {modal === 'manual' && <ManualTaskModal today={todayKey()} onSave={addManualTask} onClose={() => setModal(null)} />}
+      <AddTaskButton
+        onManualAdd={() => setModal('manual')}
+        onOpenArchive={() => setModal('archive')}
+        onOpenCompleted={() => setModal('completed')}
+      />
+      {modal === 'manual' && (
+        <ManualTaskModal
+          today={todayKey()}
+          onSave={addManualTask}
+          onClose={() => setModal(null)}
+          onVoiceOpen={() => setModal('voice')}
+        />
+      )}
       {modal === 'voice' && <VoiceTaskInput onCreate={addVoiceTask} onClose={() => setModal(null)} />}
       {modal === 'settings' && (
         <div className="modal-backdrop" role="presentation">
@@ -93,8 +107,8 @@ export function App() {
           <section className="settings-sheet" role="dialog" aria-modal="true" aria-label="保管リスト">
             <header>
               <h2>保管リスト</h2>
-              <button type="button" onClick={() => setModal('settings')}>
-                戻る
+              <button type="button" onClick={() => setModal(null)}>
+                閉じる
               </button>
             </header>
             {archivedTasks.length === 0 ? (
@@ -107,6 +121,30 @@ export function App() {
                     <button type="button" onClick={() => updateTask(restoreTask(task))}>
                       戻す
                     </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+        </div>
+      )}
+      {modal === 'completed' && (
+        <div className="modal-backdrop" role="presentation">
+          <section className="settings-sheet" role="dialog" aria-modal="true" aria-label="完了履歴">
+            <header>
+              <h2>完了履歴</h2>
+              <button type="button" onClick={() => setModal(null)}>
+                閉じる
+              </button>
+            </header>
+            {completedTasks.length === 0 ? (
+              <p className="empty-text">完了したタスクはありません</p>
+            ) : (
+              <div className="archive-list">
+                {completedTasks.map((task) => (
+                  <div className="archive-row" key={task.id}>
+                    <span>{task.title}</span>
+                    <span>完了済み</span>
                   </div>
                 ))}
               </div>

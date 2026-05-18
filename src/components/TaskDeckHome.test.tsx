@@ -20,7 +20,7 @@ const task = (overrides: Partial<Task>): Task => ({
 const sections: DeckSections = {
   overdue: [task({ id: 'old', title: '提出済みのレポートを確認する', dueDate: '2026-05-18' })],
   today: [
-    task({ id: 'one', title: '企画書の構成を考える', order: 1 }),
+    task({ id: 'one', title: '企画書の構成を整える', order: 1 }),
     task({ id: 'two', title: 'メールの返信をする', order: 2 }),
     task({ id: 'three', title: '資料をまとめる', order: 3 }),
   ],
@@ -28,16 +28,18 @@ const sections: DeckSections = {
 };
 
 function renderHome(overrides = {}) {
-  return render(
-    <TaskDeckHome
-      sections={sections}
-      onComplete={vi.fn()}
-      onPostpone={vi.fn()}
-      onArchive={vi.fn()}
-      onOpenSettings={vi.fn()}
-      {...overrides}
-    />,
-  );
+  const props = {
+    sections,
+    onComplete: vi.fn(),
+    onPostpone: vi.fn(),
+    onArchive: vi.fn(),
+    onOpenSettings: vi.fn(),
+    onOpenArchive: vi.fn(),
+    ...overrides,
+  };
+
+  render(<TaskDeckHome {...props} />);
+  return props;
 }
 
 describe('TaskDeckHome', () => {
@@ -46,62 +48,66 @@ describe('TaskDeckHome', () => {
     expect(screen.getByRole('heading', { name: 'Task Deck' })).toBeInTheDocument();
   });
 
-  test('参考画像に沿った白基調で柔らかいカードUIを表示する', () => {
+  test('参考画像に合わせた短いサブコピーを表示する', () => {
     renderHome();
-    expect(screen.getByText('企画書の構成を考える').closest('article')).toHaveClass('task-card');
+    expect(screen.getByText('3つだけ、シンプルに、今日やること。')).toBeInTheDocument();
   });
 
-  test('期限切れタスクを最上部の期限切れエリアに表示する', () => {
+  test('期限切れタスクを最上部のエリアに表示する', () => {
     renderHome();
     expect(screen.getByLabelText('期限切れ')).toHaveTextContent('提出済みのレポートを確認する');
   });
 
-  test('期限切れタスクは色だけでなくアイコンとテキストでも強調する', () => {
-    renderHome();
-    expect(screen.getAllByText('期限切れ').length).toBeGreaterThan(0);
-  });
-
   test('今日中タスクを優先順に最大3件表示する', () => {
     renderHome();
-    expect(screen.getByLabelText('今日中')).toHaveTextContent('企画書の構成を考える');
-    expect(screen.getByLabelText('今日中')).toHaveTextContent('メールの返信をする');
-    expect(screen.getByLabelText('今日中')).toHaveTextContent('資料をまとめる');
+    const today = screen.getByLabelText('今日中');
+    expect(today).toHaveTextContent('企画書の構成を整える');
+    expect(today).toHaveTextContent('メールの返信をする');
+    expect(today).toHaveTextContent('資料をまとめる');
   });
 
-  test('明日以降の最も近いタスクを補助的に表示する', () => {
+  test('明日以降の直近タスクを補助的に表示する', () => {
     renderHome();
     expect(screen.getByLabelText('明日以降')).toHaveTextContent('ジムに行く');
   });
 
-  test('すべてのタスク一覧をメイン体験として表示しない', () => {
+  test('保管リストと設定をトップ操作として表示する', () => {
     renderHome();
-    expect(screen.queryByText('すべてのタスク')).not.toBeInTheDocument();
-  });
-
-  test('設定ボタンを表示する', () => {
-    renderHome();
+    expect(screen.getByRole('button', { name: '保管リスト' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '設定' })).toBeInTheDocument();
   });
 
-  test('左スワイプで完了の視覚フィードバックを表示する', () => {
+  test('保管済みタスク一覧をメイン画面に常時表示しない', () => {
     renderHome();
-    expect(screen.getAllByRole('button', { name: '完了' }).length).toBeGreaterThan(0);
+    expect(screen.queryByText('保管中のタスクはありません')).not.toBeInTheDocument();
   });
 
-  test('右スワイプで後回しの視覚フィードバックを表示する', () => {
-    renderHome();
-    expect(screen.getAllByRole('button', { name: '後回し' }).length).toBeGreaterThan(0);
-  });
-
-  test('下スワイプで保管の視覚フィードバックを表示する', () => {
-    renderHome();
-    expect(screen.getAllByRole('button', { name: '保管' }).length).toBeGreaterThan(0);
-  });
-
-  test('タスク操作後に表示中の最上部カードが更新される', async () => {
+  test('通常タスクの操作メニューから完了できる', async () => {
     const onComplete = vi.fn();
     renderHome({ onComplete });
-    await userEvent.click(screen.getAllByRole('button', { name: '完了' })[0]);
-    expect(onComplete).toHaveBeenCalled();
+    await userEvent.click(screen.getByRole('button', { name: '企画書の構成を整えるの操作' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: '完了' }));
+    expect(onComplete.mock.calls[0][0].id).toBe('one');
+  });
+
+  test('通常タスクの操作メニューから後回しできる', async () => {
+    const onPostpone = vi.fn();
+    renderHome({ onPostpone });
+    await userEvent.click(screen.getByRole('button', { name: 'メールの返信をするの操作' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: '後回し' }));
+    expect(onPostpone.mock.calls[0][0].id).toBe('two');
+  });
+
+  test('通常タスクの操作メニューから保管できる', async () => {
+    const onArchive = vi.fn();
+    renderHome({ onArchive });
+    await userEvent.click(screen.getByRole('button', { name: '資料をまとめるの操作' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: '保管' }));
+    expect(onArchive.mock.calls[0][0].id).toBe('three');
+  });
+
+  test('期限切れタスクは後回しできない状態として表示する', () => {
+    renderHome();
+    expect(screen.getByRole('button', { name: '期限切れのため後回し不可' })).toBeDisabled();
   });
 });

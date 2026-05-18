@@ -3,45 +3,57 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, test, vi } from 'vitest';
 import { AddTaskButton } from './AddTaskButton';
 
+function renderDock(overrides = {}) {
+  const props = {
+    onManualAdd: vi.fn(),
+    onOpenArchive: vi.fn(),
+    onOpenCompleted: vi.fn(),
+    ...overrides,
+  };
+
+  render(<AddTaskButton {...props} />);
+  return props;
+}
+
 describe('AddTaskButton', () => {
-  test('画面下部に横長のタスク追加ボタンを表示する', () => {
-    render(<AddTaskButton onManualAdd={vi.fn()} onVoiceAdd={vi.fn()} />);
-    expect(screen.getByRole('button', { name: /タスクを追加/ })).toBeInTheDocument();
+  test('画面下部にドック型ナビゲーションを表示する', () => {
+    renderDock();
+    expect(screen.getByLabelText('下部ナビゲーション')).toHaveClass('bottom-dock');
   });
 
-  test('ボタン本体にはプラスアイコンとタスク追加ラベルを表示する', () => {
-    render(<AddTaskButton onManualAdd={vi.fn()} onVoiceAdd={vi.fn()} />);
-    expect(screen.getByText('タスクを追加')).toBeInTheDocument();
+  test('中央にタスク追加ボタンを表示する', () => {
+    renderDock();
+    expect(screen.getByRole('button', { name: 'タスクを追加' })).toBeInTheDocument();
   });
 
-  test('ボタン右端にマイクアイコンを表示する', () => {
-    render(<AddTaskButton onManualAdd={vi.fn()} onVoiceAdd={vi.fn()} />);
-    expect(screen.getByRole('button', { name: '音声入力' })).toBeInTheDocument();
+  test('左に保管リストボタンを表示する', () => {
+    renderDock();
+    expect(screen.getByRole('button', { name: '保管リスト' })).toBeInTheDocument();
   });
 
-  test('ボタン本体をタップすると手入力モーダルが開く', async () => {
+  test('右に完了履歴ボタンを表示する', () => {
+    renderDock();
+    expect(screen.getByRole('button', { name: '完了履歴' })).toBeInTheDocument();
+  });
+
+  test('中央ボタンをタップすると手入力モーダルを開く', async () => {
     const onManualAdd = vi.fn();
-    render(<AddTaskButton onManualAdd={onManualAdd} onVoiceAdd={vi.fn()} />);
-    await userEvent.click(screen.getByRole('button', { name: /タスクを追加/ }));
+    renderDock({ onManualAdd });
+    await userEvent.click(screen.getByRole('button', { name: 'タスクを追加' }));
     expect(onManualAdd).toHaveBeenCalled();
   });
 
-  test('マイクアイコンをタップすると音声入力が開始される', async () => {
-    const onVoiceAdd = vi.fn();
-    render(<AddTaskButton onManualAdd={vi.fn()} onVoiceAdd={onVoiceAdd} />);
-    await userEvent.click(screen.getByRole('button', { name: '音声入力' }));
-    expect(onVoiceAdd).toHaveBeenCalled();
+  test('保管リストボタンをタップすると保管リストを開く', async () => {
+    const onOpenArchive = vi.fn();
+    renderDock({ onOpenArchive });
+    await userEvent.click(screen.getByRole('button', { name: '保管リスト' }));
+    expect(onOpenArchive).toHaveBeenCalled();
   });
 
-  test('マイクアイコンをタップしても手入力モーダルは開かない', async () => {
-    const onManualAdd = vi.fn();
-    render(<AddTaskButton onManualAdd={onManualAdd} onVoiceAdd={vi.fn()} />);
-    await userEvent.click(screen.getByRole('button', { name: '音声入力' }));
-    expect(onManualAdd).not.toHaveBeenCalled();
-  });
-
-  test('片手操作しやすい位置に追加ボタンを維持する', () => {
-    render(<AddTaskButton onManualAdd={vi.fn()} onVoiceAdd={vi.fn()} />);
-    expect(screen.getByLabelText('タスク追加')).toHaveClass('add-task-bar');
+  test('完了履歴ボタンをタップすると完了履歴を開く', async () => {
+    const onOpenCompleted = vi.fn();
+    renderDock({ onOpenCompleted });
+    await userEvent.click(screen.getByRole('button', { name: '完了履歴' }));
+    expect(onOpenCompleted).toHaveBeenCalled();
   });
 });

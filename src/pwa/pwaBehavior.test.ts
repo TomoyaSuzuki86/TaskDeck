@@ -37,10 +37,11 @@ describe('PWA behavior', () => {
     expect(sync).toContain('processSyncQueue');
   });
 
-  test('スマホ幅でもメインデッキを操作しやすく保つ', () => {
+  test('スマホ幅でもメインデッキを操作しやすい位置に保つ', () => {
     const css = readFileSync(join(root, 'src/styles.css'), 'utf-8');
-    expect(css).toContain('width: min(430px, 100%)');
-    expect(css).toContain('bottom: 22px');
+    expect(css).toContain('width: min(760px, 100%)');
+    expect(css).toContain('bottom: 28px');
+    expect(css).toContain('.bottom-dock');
   });
 
   test('Firebase Hostingへデプロイしやすい構成にする', () => {

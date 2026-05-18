@@ -13,7 +13,7 @@ export function VoiceTaskInput({ onCreate, onClose }: VoiceTaskInputProps) {
 
   const save = () => {
     if (!text.trim()) return;
-    onCreate(text);
+    onCreate(text.trim());
     setDone(true);
   };
 
